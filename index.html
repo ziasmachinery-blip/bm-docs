@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b5d45">
+<title>Документация БМ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --emerald:#0b5d45; --emerald-2:#0e7356; --emerald-soft:#e3f1ec;
+    --ash:#6b7175; --ash-2:#9aa0a4; --line:#dfe3e5;
+    --bg:#f3f4f4; --card:#ffffff; --text:#1d2224; --muted:#5d6468;
+    --warn-bg:#fff5df; --warn:#8a5a00;
+    --radius:16px;
+    --fs:17px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --emerald:#0b5d45; --emerald-2:#3fbf95; --emerald-soft:#16302a;
+      --ash:#9aa0a4; --ash-2:#757b7f; --line:#2c3235;
+      --bg:#141819; --card:#1d2224; --text:#e9ecec; --muted:#a8afb2;
+      --warn-bg:#3a2f16; --warn:#f2c46b;
+    }
+  }
+  :root[data-theme="dark"]{
+    --emerald:#0b5d45; --emerald-2:#3fbf95; --emerald-soft:#16302a;
+    --ash:#9aa0a4; --ash-2:#757b7f; --line:#2c3235;
+    --bg:#141819; --card:#1d2224; --text:#e9ecec; --muted:#a8afb2;
+    --warn-bg:#3a2f16; --warn:#f2c46b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text)}
+  body{font:400 var(--fs)/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;-webkit-text-size-adjust:100%}
+  button{font:inherit;color:inherit}
+  .bar{position:sticky;top:0;z-index:5;background:var(--emerald);color:#fff;
+       padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;align-items:center;gap:10px;min-height:58px}
+  .mark{width:36px;height:36px;flex:none}
+  .bar h1{font-size:18px;line-height:1.2;margin:0;font-weight:650;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar small{display:block;font-size:12.5px;font-weight:400;opacity:.8}
+  .ib{background:rgba(255,255,255,.14);border:0;border-radius:12px;height:40px;min-width:40px;padding:0 10px;
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:#fff;font-size:15px;font-weight:600}
+  .ib:active{background:rgba(255,255,255,.28)}
+  .ib svg{width:22px;height:22px}
+  main{max-width:760px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+  .hidden{display:none !important}
+
+  /* language screen */
+  .hello{text-align:center;padding:18px 4px 6px}
+  .hello .big{width:72px;height:72px;margin:0 auto 10px}
+  .hello h2{margin:0;font-size:22px;line-height:1.35;font-weight:650}
+  .hello h2 span{display:block;color:var(--muted);font-size:18px;font-weight:500}
+  .langs{display:grid;gap:12px;margin-top:20px}
+  .lang{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+        background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:16px 18px;min-height:76px}
+  .lang:active{transform:scale(.99)}
+  .lang.last{border-color:var(--emerald-2)}
+  .lang .code{flex:none;width:48px;height:48px;border-radius:12px;background:var(--emerald-soft);color:var(--emerald-2);
+              display:flex;align-items:center;justify-content:center;font-weight:750;font-size:16px;letter-spacing:.5px}
+  .lang b{display:block;font-size:21px;font-weight:650}
+  .lang em{display:block;font-style:normal;color:var(--muted);font-size:14.5px}
+  .lang .arr{margin-left:auto;color:var(--ash-2)}
+
+  /* list */
+  .search{position:relative;display:block;margin:2px 0 18px}
+  .search input{width:100%;height:48px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--text);
+                padding:0 14px 0 44px;font:inherit;font-size:16px}
+  .search input:focus{outline:2px solid var(--emerald-2);outline-offset:1px}
+  .search svg{position:absolute;left:14px;top:13px;width:22px;height:22px;color:var(--ash-2)}
+  .sec{margin:22px 2px 10px;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:650}
+  .sec:first-of-type{margin-top:6px}
+  .cards{display:grid;gap:10px}
+  .card{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;background:var(--card);
+        border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;min-height:78px}
+  .card:active{background:var(--emerald-soft)}
+  .card .ic{flex:none;width:48px;height:48px;border-radius:14px;background:var(--emerald);color:#fff;display:flex;align-items:center;justify-content:center}
+  .card .ic svg{width:26px;height:26px}
+  .card b{display:block;font-size:19px;font-weight:650;line-height:1.25}
+  .card em{display:block;font-style:normal;color:var(--muted);font-size:14.5px;line-height:1.35;margin-top:2px}
+  .card .tag{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:2px 8px}
+  .card .arr{margin-left:auto;color:var(--ash-2);flex:none}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
+
+  /* document */
+  .note{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:15px;margin:0 0 14px}
+  .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin:0 0 12px}
+  .meta .sp{flex:1}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:10px;height:38px;min-width:44px;padding:0 10px;cursor:pointer;font-weight:650;font-size:15px}
+  .chip.on{background:var(--emerald);border-color:var(--emerald);color:#fff}
+  article{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:6px 18px 18px;overflow-wrap:anywhere}
+  article h1{font-size:1.35em;line-height:1.3;margin:.7em 0 .5em}
+  article h2{font-size:1.15em;line-height:1.3;margin:1.4em 0 .5em;padding-top:.9em;border-top:1px solid var(--line);color:var(--emerald-2)}
+  article h3{font-size:1.04em;margin:1.2em 0 .4em}
+  article p{margin:.6em 0}
+  article ul,article ol{padding-left:1.25em;margin:.5em 0}
+  article li{margin:.35em 0}
+  article blockquote{margin:1em 0;padding:10px 14px;border-left:4px solid var(--emerald-2);background:var(--emerald-soft);border-radius:0 10px 10px 0}
+  article blockquote p{margin:.2em 0}
+  .tw{overflow-x:auto;margin:.9em -4px;-webkit-overflow-scrolling:touch}
+  article table{border-collapse:collapse;width:100%;min-width:480px;font-size:.92em}
+  article th,article td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+  article th{background:var(--emerald-soft)}
+  article code{background:var(--emerald-soft);border-radius:6px;padding:1px 5px;font-size:.92em}
+  .loading{color:var(--muted);text-align:center;padding:40px 0}
+  .err{color:var(--warn);background:var(--warn-bg);border-radius:12px;padding:14px;text-align:center}
+  .foot{color:var(--ash-2);font-size:12.5px;text-align:center;margin-top:24px}
+  @media print{ .bar,.meta,.search,.foot{display:none !important} article{border:0;padding:0} body{background:#fff;color:#000} }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <button id="back" class="ib hidden" aria-label="Назад">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="10" fill="rgba(255,255,255,.16)"/><text x="20" y="26.5" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="700" fill="#fff">БМ</text></svg>
+  <h1 id="title">Документация БМ<small id="subtitle"></small></h1>
+  <button id="langBtn" class="ib hidden" aria-label="Язык">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+    <span id="langCode">RU</span>
+  </button>
+</header>
+
+<main>
+  <section id="vLang" class="hidden">
+    <div class="hello">
+      <svg class="big" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="10" fill="#0b5d45"/><text x="20" y="26.5" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="700" fill="#fff">БМ</text></svg>
+      <h2>Выберите язык<span>Забонро интихоб кунед</span><span>Tilni tanlang</span></h2>
+    </div>
+    <div class="langs" id="langs"></div>
+  </section>
+
+  <section id="vList" class="hidden">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" autocomplete="off">
+    </label>
+    <div id="list"></div>
+  </section>
+
+  <section id="vDoc" class="hidden">
+    <div id="docNote" class="note hidden"></div>
+    <div class="meta">
+      <span id="docVer"></span><span class="sp"></span>
+      <button class="chip" id="fsMinus" aria-label="A-">A−</button>
+      <button class="chip" id="fsPlus" aria-label="A+">A+</button>
+    </div>
+    <article id="doc"></article>
+  </section>
+
+  <p class="foot" id="foot">ООО ХПК «Борисовские мануфактуры»</p>
+</main>
+
+<script src="assets/marked.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var UI = {
+    ru:{docs:"Документы", search:"Поиск по документам", onlyRu:"Только на русском", onlyRuNote:"Этот документ есть только на русском языке.",
+        ver:"Версия", back:"Назад", lang:"Язык", loading:"Загрузка…", err:"Не удалось загрузить. Проверьте Wi-Fi и попробуйте ещё раз.",
+        retry:"Повторить", none:"Ничего не найдено", notFound:"Документ не найден"},
+    tj:{docs:"Ҳуҷҷатҳо", search:"Ҷустуҷӯ дар ҳуҷҷатҳо", onlyRu:"Танҳо бо забони русӣ", onlyRuNote:"Ин ҳуҷҷат танҳо бо забони русӣ мавҷуд аст.",
+        ver:"Версия", back:"Бозгашт", lang:"Забон", loading:"Боркунӣ…", err:"Бор нашуд. Wi-Fi-ро санҷед ва боз кӯшиш кунед.",
+        retry:"Боз кӯшиш", none:"Ҳеҷ чиз ёфт нашуд", notFound:"Ҳуҷҷат ёфт нашуд"},
+    uz:{docs:"Hujjatlar", search:"Hujjatlardan qidirish", onlyRu:"Faqat rus tilida", onlyRuNote:"Bu hujjat faqat rus tilida mavjud.",
+        ver:"Versiya", back:"Orqaga", lang:"Til", loading:"Yuklanmoqda…", err:"Yuklab bo'lmadi. Wi-Fi ni tekshirib, qayta urinib ko'ring.",
+        retry:"Qayta urinish", none:"Hech narsa topilmadi", notFound:"Hujjat topilmadi"}
+  };
+
+  var ICONS = {
+    clipboard:'<path d="M9 4h6v3H9z"/><path d="M8 5.5H6.5A1.5 1.5 0 0 0 5 7v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5H16"/><path d="M8.5 12h7M8.5 16h5"/>',
+    bucket:'<path d="M5 8h14l-1.6 11a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M4 8h16"/><path d="M8 8a4 4 0 0 1 8 0"/>',
+    layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+    box:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',
+    palette:'<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.8-1.8 0-1.3-1-1.6-1-2.7 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.3" r="1.2"/>',
+    doc:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'
+  };
+  var ARROW = '<svg class="arr" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+
+  var $ = function(id){ return document.getElementById(id); };
+  var store = {
+    get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+
+  var CAT = null;
+  var params = new URLSearchParams(location.search);
+  var qrDoc = params.get("doc");        // document from a QR code: ?doc=master
+  var qrLang = params.get("lang");      // optional fixed language: ?lang=tj
+  var fs = parseInt(store.get("bm.fs") || "17", 10);
+  applyFs();
+
+  function L(){ var p = currentRoute(); return p.lang || store.get("bm.lang") || "ru"; }
+  function t(key, lang){ return (UI[lang] || UI.ru)[key]; }
+  function pick(obj, lang){ return obj ? (obj[lang] || obj.ru || "") : ""; }
+
+  function currentRoute(){
+    var h = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+    var lang = h[0] && UI[h[0]] ? h[0] : null;
+    return { lang: lang, doc: lang ? (h[1] || null) : null };
+  }
+  function go(hash){ if(location.hash !== hash){ location.hash = hash; } else { render(); } }
+
+  function show(view){
+    ["vLang","vList","vDoc"].forEach(function(v){ $(v).classList.toggle("hidden", v !== view); });
+    window.scrollTo(0,0);
+  }
+
+  function setBar(title, sub, lang, showBack, showLang){
+    $("title").firstChild.nodeValue = title;
+    $("subtitle").textContent = sub || "";
+    $("back").classList.toggle("hidden", !showBack);
+    $("langBtn").classList.toggle("hidden", !showLang);
+    $("langCode").textContent = (lang || "ru").toUpperCase();
+    $("back").setAttribute("aria-label", t("back", lang));
+    $("langBtn").setAttribute("aria-label", t("lang", lang));
+    document.documentElement.lang = lang === "tj" ? "tg" : (lang || "ru");
+    document.title = title;
+  }
+
+  /* ---------- views ---------- */
+  function renderLang(){
+    var last = store.get("bm.lang");
+    setBar(CAT ? pick(CAT.title,"ru") : "Документация БМ", "", "ru", false, false);
+    var box = $("langs"); box.innerHTML = "";
+    (CAT ? CAT.languages : [{code:"ru",name:"Русский"},{code:"tj",name:"Тоҷикӣ"},{code:"uz",name:"O'zbekcha"}]).forEach(function(l){
+      var b = document.createElement("button");
+      b.className = "lang" + (l.code === last ? " last" : "");
+      b.innerHTML = '<span class="code"></span><span><b></b><em></em></span>' + ARROW;
+      b.querySelector(".code").textContent = l.code.toUpperCase();
+      b.querySelector("b").textContent = l.name;
+      b.querySelector("em").textContent = l.hint || "";
+      b.onclick = function(){ chooseLang(l.code); };
+      box.appendChild(b);
+    });
+    show("vLang");
+  }
+
+  function chooseLang(code){
+    store.set("bm.lang", code);
+    if(qrDoc && findDoc(qrDoc)){ var d = qrDoc; qrDoc = null; go("#/" + code + "/" + d); }
+    else { go("#/" + code); }
+  }
+
+  function findDoc(id){
+    if(!CAT) return null;
+    for(var i=0;i<CAT.documents.length;i++){ if(CAT.documents[i].id === id) return CAT.documents[i]; }
+    return null;
+  }
+
+  function renderList(lang){
+    setBar(pick(CAT.title, lang), t("docs", lang), lang, false, true);
+    $("q").placeholder = t("search", lang);
+    var q = ($("q").value || "").trim().toLowerCase();
+    var box = $("list"); box.innerHTML = "";
+    var shown = 0;
+    CAT.sections.forEach(function(sec){
+      var docs = CAT.documents.filter(function(d){
+        if(d.section !== sec.id) return false;
+        if(!q) return true;
+        var hay = [pick(d.title,lang), pick(d.subtitle,lang), pick(d.title,"ru"), pick(d.subtitle,"ru")].join(" ").toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+      if(!docs.length) return;
+      var h = document.createElement("div"); h.className = "sec"; h.textContent = pick(sec.title, lang); box.appendChild(h);
+      var grid = document.createElement("div"); grid.className = "cards"; box.appendChild(grid);
+      docs.forEach(function(d){
+        shown++;
+        var b = document.createElement("button");
+        b.className = "card";
+        b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
+                      (ICONS[d.icon] || ICONS.doc) + '</svg></span><span><b></b><em></em></span>' + ARROW;
+        b.querySelector("b").textContent = pick(d.title, lang);
+        b.querySelector("em").textContent = pick(d.subtitle, lang);
+        if(!d.files[lang]){
+          var tag = document.createElement("span"); tag.className = "tag"; tag.textContent = t("onlyRu", lang);
+          b.querySelector("em").after(tag);
+        }
+        b.onclick = function(){ go("#/" + lang + "/" + d.id); };
+        grid.appendChild(b);
+      });
+    });
+    if(!shown){ box.innerHTML = '<p class="empty"></p>'; box.firstChild.textContent = t("none", lang); }
+    show("vList");
+  }
+
+  var loadSeq = 0;
+  function renderDoc(lang, id){
+    var d = findDoc(id);
+    if(!d){ go("#/" + lang); return; }
+    var file = d.files[lang] || d.files.ru;
+    setBar(pick(d.title, lang), d.files[lang] ? "" : t("onlyRu", lang), lang, true, true);
+    var note = $("docNote");
+    note.classList.toggle("hidden", !!d.files[lang]);
+    note.textContent = t("onlyRuNote", lang);
+    $("docVer").textContent = d.version ? t("ver", lang) + " " + d.version : "";
+    var art = $("doc");
+    art.innerHTML = '<p class="loading"></p>'; art.firstChild.textContent = t("loading", lang);
+    show("vDoc");
+    var seq = ++loadSeq;
+    fetch(file + "?v=" + encodeURIComponent(d.version || ""), {cache:"no-cache"})
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function(md){
+        if(seq !== loadSeq) return;
+        art.innerHTML = window.marked ? marked.parse(md, {gfm:true, breaks:false}) : "<pre></pre>";
+        if(!window.marked) art.firstChild.textContent = md;
+        art.querySelectorAll("table").forEach(function(tb){
+          var w = document.createElement("div"); w.className = "tw"; tb.parentNode.insertBefore(w, tb); w.appendChild(tb);
+        });
+        art.querySelectorAll("a[href^='http']").forEach(function(a){ a.target = "_blank"; a.rel = "noopener"; });
+      })
+      .catch(function(){
+        if(seq !== loadSeq) return;
+        art.innerHTML = '<div class="err"><p></p><button class="chip on"></button></div>';
+        art.querySelector("p").textContent = t("err", lang);
+        var rb = art.querySelector("button"); rb.textContent = t("retry", lang);
+        rb.onclick = function(){ renderDoc(lang, id); };
+      });
+  }
+
+  function render(){
+    if(!CAT) return;
+    var r = currentRoute();
+    if(!r.lang){ renderLang(); return; }
+    store.set("bm.lang", r.lang);
+    if(r.doc){ renderDoc(r.lang, r.doc); } else { renderList(r.lang); }
+  }
+
+  function applyFs(){
+    fs = Math.max(14, Math.min(26, fs));
+    document.documentElement.style.setProperty("--fs", fs + "px");
+    store.set("bm.fs", String(fs));
+  }
+
+  /* ---------- events ---------- */
+  $("back").onclick = function(){ go("#/" + L()); };
+  $("langBtn").onclick = function(){
+    var r = currentRoute();
+    if(r.doc){ qrDoc = r.doc; }          // keep the open document after switching language
+    go("#/");
+  };
+  $("q").addEventListener("input", function(){ renderList(L()); });
+  $("fsMinus").onclick = function(){ fs -= 2; applyFs(); };
+  $("fsPlus").onclick = function(){ fs += 2; applyFs(); };
+  window.addEventListener("hashchange", render);
+
+  /* ---------- start ---------- */
+  fetch("catalog.json", {cache:"no-cache"})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(c){
+      CAT = c;
+      // A QR scan opens the page without a #route: always offer the language first,
+      // unless the QR itself fixes the language (?lang=tj).
+      if(!location.hash || location.hash === "#" || location.hash === "#/"){
+        if(qrLang && UI[qrLang]){ chooseLang(qrLang); return; }
+      }
+      render();
+    })
+    .catch(function(){
+      setBar("Документация БМ", "", "ru", false, false);
+      $("vLang").classList.remove("hidden");
+      $("langs").innerHTML = '<div class="err">Не удалось загрузить список. Проверьте Wi-Fi.<br>Бор нашуд. Wi-Fi-ро санҷед.<br>Yuklab bo\'lmadi. Wi-Fi ni tekshiring.</div>';
+    });
+
+  if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

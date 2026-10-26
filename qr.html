@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR-коды документации</title>
+<style>
+  :root{--emerald:#0b5d45;--line:#d7dcde;--muted:#5d6468}
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef0f0;color:#1d2224;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .panel{max-width:900px;margin:0 auto;padding:16px}
+  .panel h1{font-size:20px;margin:0 0 6px}
+  .panel p{margin:4px 0 10px;color:var(--muted)}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .row input{flex:1;min-width:240px;height:42px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font:inherit}
+  .row button{height:42px;border:0;border-radius:10px;padding:0 16px;background:var(--emerald);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  .row label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+  .row input[type=checkbox]{flex:none;min-width:0;width:18px;height:18px}
+  .sheet{max-width:900px;margin:0 auto 30px;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;break-inside:avoid;page-break-inside:avoid}
+  .q.main{grid-column:1/-1;display:flex;gap:20px;align-items:center;text-align:left}
+  .q svg{width:100%;max-width:210px;height:auto;display:block;margin:0 auto}
+  .q.main svg{max-width:240px;margin:0}
+  .q .brand{font-weight:700;color:var(--emerald);letter-spacing:.04em;font-size:13px;text-transform:uppercase}
+  .q h2{font-size:20px;margin:8px 0 2px;line-height:1.2}
+  .q.main h2{font-size:26px}
+  .q .tr{color:#333;font-size:15px;line-height:1.35}
+  .q .how{margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.35}
+  .q .url{margin-top:6px;font-size:10.5px;color:#8a9094;word-break:break-all}
+  @media (max-width:560px){ .q.main{flex-direction:column;text-align:center} .q.main svg{margin:0 auto} }
+  @page{size:A4;margin:10mm}
+  @media print{
+    body{background:#fff}
+    .panel{display:none}
+    .sheet{max-width:none;padding:0;grid-template-columns:1fr 1fr;gap:8mm}
+    .q{border:1px dashed #9aa0a4;border-radius:4mm;padding:5mm}
+    .q svg{max-width:58mm}
+    .q.main svg{max-width:70mm}
+  }
+</style>
+</head>
+<body>
+<div class="panel">
+  <h1>QR-коды для печати</h1>
+  <p>Общий QR открывает выбор языка и список всех документов. QR документа — выбор языка и сразу этот документ. Вырежьте и повесьте у рабочего места.</p>
+  <div class="row">
+    <input id="base" aria-label="Адрес приложения">
+    <button id="apply">Обновить</button>
+    <button id="print">🖨 Печать</button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <label><input type="checkbox" id="withUrl" checked> печатать адрес под кодом</label>
+  </div>
+</div>
+<div class="sheet" id="sheet"></div>
+
+<script src="assets/qrcode.js"></script>
+<script>
+(function(){
+  var DEFAULT_BASE = "https://ziasmachinery-blip.github.io/bm-docs/";
+  var HOW = "Сканируйте → выберите язык · Скан кунед → забонро интихоб кунед · Skanerlang → tilni tanlang";
+  var base = location.protocol === "file:" ? DEFAULT_BASE : new URL("./", location.href).href;
+  try { base = localStorage.getItem("bm.qrbase") || base; } catch(e){}
+  var input = document.getElementById("base");
+  input.value = base;
+
+  function svg(url){
+    var qr = qrcode(0, "M");
+    qr.addData(url, "Byte");
+    qr.make();
+    return qr.createSvgTag({cellSize: 4, margin: 2, scalable: true});
+  }
+  function norm(u){ u = (u || "").trim(); if(u && !/\/$/.test(u) && !/\.html$/.test(u)) u += "/"; return u; }
+  function el(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
+
+  function build(cat){
+    var b = norm(input.value);
+    var withUrl = document.getElementById("withUrl").checked;
+    var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
+
+    var m = el("div", "q main");
+    m.innerHTML = svg(b);
+    var mt = el("div");
+    mt.appendChild(el("div", "brand", "Борисовские мануфактуры"));
+    mt.appendChild(el("h2", "", "Инструкции и регламенты"));
+    mt.appendChild(el("div", "tr", "Дастурамалҳо ва низомномаҳо"));
+    mt.appendChild(el("div", "tr", "Yo'riqnomalar va reglamentlar"));
+    mt.appendChild(el("div", "how", HOW));
+    if(withUrl) mt.appendChild(el("div", "url", b));
+    m.appendChild(mt);
+    sheet.appendChild(m);
+
+    cat.documents.forEach(function(d){
+      var url = b + "?doc=" + encodeURIComponent(d.id);
+      var c = el("div", "q");
+      c.innerHTML = svg(url);
+      c.appendChild(el("h2", "", d.title.ru));
+      var tr = [d.title.tj, d.title.uz].filter(Boolean).join(" · ");
+      if(tr) c.appendChild(el("div", "tr", tr));
+      c.appendChild(el("div", "how", HOW));
+      if(withUrl) c.appendChild(el("div", "url", url));
+      sheet.appendChild(c);
+    });
+    try { localStorage.setItem("bm.qrbase", b); } catch(e){}
+  }
+
+  fetch("catalog.json").then(function(r){ return r.json(); }).then(function(cat){
+    build(cat);
+    document.getElementById("apply").onclick = function(){ build(cat); };
+    document.getElementById("withUrl").onchange = function(){ build(cat); };
+  }).catch(function(){
+    document.getElementById("sheet").textContent = "Не удалось прочитать catalog.json. Откройте эту страницу с опубликованного сайта (GitHub Pages или сервер цеха).";
+  });
+  document.getElementById("print").onclick = function(){ window.print(); };
+})();
+</script>
+</body>
+</html>
