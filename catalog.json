@@ -4,19 +4,41 @@
     "tj": "Ҳуҷҷатҳои БМ",
     "uz": "BM hujjatlari"
   },
+  "accessApi": "",
+  "accessApiNote": "Сюда вставьте ссылку /exec скрипта «Документация БМ — доступ» (см. README). Пока пусто — закрытые документы не открываются.",
   "languages": [
-    { "code": "ru", "name": "Русский", "hint": "Инструкции на русском" },
-    { "code": "tj", "name": "Тоҷикӣ", "hint": "Дастурамал бо забони тоҷикӣ" },
-    { "code": "uz", "name": "O'zbekcha", "hint": "Yo'riqnomalar o'zbek tilida" }
+    {
+      "code": "ru",
+      "name": "Русский",
+      "hint": "Инструкции на русском"
+    },
+    {
+      "code": "tj",
+      "name": "Тоҷикӣ",
+      "hint": "Дастурамал бо забони тоҷикӣ"
+    },
+    {
+      "code": "uz",
+      "name": "O'zbekcha",
+      "hint": "Yo'riqnomalar o'zbek tilida"
+    }
   ],
   "sections": [
     {
       "id": "roles",
-      "title": { "ru": "Инструкции по ролям", "tj": "Дастурамалҳо аз рӯи вазифа", "uz": "Lavozim bo'yicha yo'riqnomalar" }
+      "title": {
+        "ru": "Инструкции по ролям",
+        "tj": "Дастурамалҳо аз рӯи вазифа",
+        "uz": "Lavozim bo'yicha yo'riqnomalar"
+      }
     },
     {
       "id": "reglaments",
-      "title": { "ru": "Регламенты", "tj": "Низомномаҳо", "uz": "Reglamentlar" }
+      "title": {
+        "ru": "Регламенты",
+        "tj": "Низомномаҳо",
+        "uz": "Reglamentlar"
+      }
     }
   ],
   "documents": [
@@ -24,46 +46,109 @@
       "id": "master",
       "section": "roles",
       "icon": "clipboard",
-      "title": { "ru": "Мастер", "tj": "Усто", "uz": "Usta" },
-      "subtitle": { "ru": "Сменное задание, работники и PIN, этикетки, исправления", "tj": "Супориши смена, коргарон ва PIN, тамғаҳо, ислоҳот", "uz": "Smena topshirig'i, ishchilar va PIN, yorliqlar, tuzatishlar" },
-      "files": { "ru": "docs/ru/master.md", "tj": "docs/tj/master.md", "uz": "docs/uz/master.md" },
-      "version": "26.10.2026 · 24"
+      "title": {
+        "ru": "Мастер",
+        "tj": "Усто",
+        "uz": "Usta"
+      },
+      "subtitle": {
+        "ru": "Сменное задание, работники и PIN, этикетки, исправления",
+        "tj": "Супориши смена, коргарон ва PIN, тамғаҳо, ислоҳот",
+        "uz": "Smena topshirig'i, ishchilar va PIN, yorliqlar, tuzatishlar"
+      },
+      "files": {
+        "ru": "docs/ru/master.md",
+        "tj": "docs/tj/master.md",
+        "uz": "docs/uz/master.md"
+      },
+      "version": "26.10.2026 · 24",
+      "access": "open"
     },
     {
       "id": "zalivshik",
       "section": "roles",
       "icon": "bucket",
-      "title": { "ru": "Заливщик", "tj": "Рехтагар", "uz": "Quyuvchi" },
-      "subtitle": { "ru": "Отметка залитых паллет по постам", "tj": "Қайди паллетаҳои рехташуда аз рӯи пост", "uz": "Quyilgan palletlarni post bo'yicha belgilash" },
-      "files": { "ru": "docs/ru/zalivshik.md", "tj": "docs/tj/zalivshik.md", "uz": "docs/uz/zalivshik.md" },
-      "version": "26.10.2026 · 24"
+      "title": {
+        "ru": "Заливщик",
+        "tj": "Рехтагар",
+        "uz": "Quyuvchi"
+      },
+      "subtitle": {
+        "ru": "Отметка залитых паллет по постам",
+        "tj": "Қайди паллетаҳои рехташуда аз рӯи пост",
+        "uz": "Quyilgan palletlarni post bo'yicha belgilash"
+      },
+      "files": {
+        "ru": "docs/ru/zalivshik.md",
+        "tj": "docs/tj/zalivshik.md",
+        "uz": "docs/uz/zalivshik.md"
+      },
+      "version": "26.10.2026 · 24",
+      "access": "open"
     },
     {
       "id": "raspalubshik",
       "section": "roles",
       "icon": "layers",
-      "title": { "ru": "Распалубщик", "tj": "Қолабкушо", "uz": "Qolipdan chiqaruvchi" },
-      "subtitle": { "ru": "Приём с заливки, годные и брак, переклад", "tj": "Қабул аз рехтан, сифатнок ва брак, аз нав чидан", "uz": "Quyishdan qabul, yaroqli va brak, qayta taxlash" },
-      "files": { "ru": "docs/ru/raspalubshik.md", "tj": "docs/tj/raspalubshik.md", "uz": "docs/uz/raspalubshik.md" },
-      "version": "26.10.2026 · 24"
+      "title": {
+        "ru": "Распалубщик",
+        "tj": "Қолабкушо",
+        "uz": "Qolipdan chiqaruvchi"
+      },
+      "subtitle": {
+        "ru": "Приём с заливки, годные и брак, переклад",
+        "tj": "Қабул аз рехтан, сифатнок ва брак, аз нав чидан",
+        "uz": "Quyishdan qabul, yaroqli va brak, qayta taxlash"
+      },
+      "files": {
+        "ru": "docs/ru/raspalubshik.md",
+        "tj": "docs/tj/raspalubshik.md",
+        "uz": "docs/uz/raspalubshik.md"
+      },
+      "version": "26.10.2026 · 24",
+      "access": "open"
     },
     {
       "id": "upakovshik",
       "section": "roles",
       "icon": "box",
-      "title": { "ru": "Упаковщик", "tj": "Бастабанд", "uz": "Qadoqlovchi" },
-      "subtitle": { "ru": "Приём, упаковка, склад и адрес хранения", "tj": "Қабул, бастабандӣ, анбор ва суроға", "uz": "Qabul, qadoqlash, ombor va manzil" },
-      "files": { "ru": "docs/ru/upakovshik.md", "tj": "docs/tj/upakovshik.md", "uz": "docs/uz/upakovshik.md" },
-      "version": "26.10.2026 · 24"
+      "title": {
+        "ru": "Упаковщик",
+        "tj": "Бастабанд",
+        "uz": "Qadoqlovchi"
+      },
+      "subtitle": {
+        "ru": "Приём, упаковка, склад и адрес хранения",
+        "tj": "Қабул, бастабандӣ, анбор ва суроға",
+        "uz": "Qabul, qadoqlash, ombor va manzil"
+      },
+      "files": {
+        "ru": "docs/ru/upakovshik.md",
+        "tj": "docs/tj/upakovshik.md",
+        "uz": "docs/uz/upakovshik.md"
+      },
+      "version": "26.10.2026 · 24",
+      "access": "open"
     },
     {
       "id": "obrazec",
       "section": "reglaments",
       "icon": "palette",
-      "title": { "ru": "Участок «Образец»", "tj": "Қитъаи «Образец»", "uz": "«Образец» uchastkasi" },
-      "subtitle": { "ru": "Постановка и выполнение задач на подбор цвета", "tj": "Супоришҳо барои интихоби ранг", "uz": "Rang tanlash topshiriqlari" },
-      "files": { "ru": "docs/ru/reglament-obrazec.md" },
-      "version": "1.0"
+      "title": {
+        "ru": "Участок «Образец»",
+        "tj": "Қитъаи «Образец»",
+        "uz": "«Образец» uchastkasi"
+      },
+      "subtitle": {
+        "ru": "Постановка и выполнение задач на подбор цвета",
+        "tj": "Супоришҳо барои интихоби ранг",
+        "uz": "Rang tanlash topshiriqlari"
+      },
+      "version": "1.0",
+      "access": "pin",
+      "langs": [
+        "ru"
+      ]
     }
   ]
 }
