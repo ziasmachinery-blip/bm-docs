@@ -128,6 +128,16 @@
   article table{border-collapse:collapse;width:100%;min-width:480px;font-size:.92em}
   article th,article td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
   article th{background:var(--emLight)}
+  article img{max-width:100%;height:auto;border-radius:8px}
+  .filecard{text-align:center;padding:26px 8px}
+  .filecard .fic{width:64px;height:64px;margin:0 auto 10px;border-radius:16px;background:var(--emLight);color:var(--em);display:flex;align-items:center;justify-content:center}
+  .filecard .fic svg{width:34px;height:34px}
+  .filecard b{display:block;font-size:17px;margin-bottom:4px;word-break:break-word}
+  .filecard span{display:block;color:var(--muted);font-size:14px;margin-bottom:14px}
+  .bigbtn{display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 22px;border-radius:14px;border:0;background:var(--em);color:#fff;font-weight:700;font-size:17px;cursor:pointer;text-decoration:none}
+  .tag.type{color:var(--ashDark);background:var(--bg);border:1px solid var(--line)}
+  .tag.hit{color:var(--em);background:var(--emLight)}
+  .sync{color:var(--muted);font-size:13px;text-align:center;margin:-6px 0 12px;min-height:18px}
   .loading{color:var(--muted);text-align:center;padding:40px 0}
   .err{color:var(--warn);background:var(--warnbg);border-radius:12px;padding:14px;text-align:center}
   .err.bad{color:var(--bad);background:var(--badbg)}
@@ -187,6 +197,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input id="q" type="search" autocomplete="off">
     </label>
+    <div class="sync" id="sync"></div>
     <div id="list"></div>
   </section>
 
@@ -221,47 +232,72 @@
 (function(){
   "use strict";
 
+  var LANGUAGES = [
+    { code:"ru", name:"Русский",   hint:"Инструкции на русском" },
+    { code:"tj", name:"Тоҷикӣ",    hint:"Дастурамал бо забони тоҷикӣ" },
+    { code:"uz", name:"O'zbekcha", hint:"Yo'riqnomalar o'zbek tilida" }
+  ];
+  var APP_TITLE = { ru:"Документация БМ", tj:"Ҳуҷҷатҳои БМ", uz:"BM hujjatlari" };
+
   var UI = {
-    ru:{docs:"Документы", search:"Поиск по документам", onlyRu:"Только на русском", onlyRuNote:"Этот документ есть только на русском языке.",
-        ver:"Версия", back:"Назад", lang:"Язык", loading:"Загрузка…", err:"Не удалось загрузить. Проверьте Wi-Fi и попробуйте ещё раз.",
-        retry:"Повторить", none:"Ничего не найдено",
+    ru:{search:"Поиск по документам", onlyRu:"Только на русском", onlyRuNote:"Этот документ есть только на русском языке.",
+        upd:"Обновлено", back:"Назад", lang:"Язык", loading:"Загрузка…", err:"Не удалось загрузить. Проверьте Wi-Fi и попробуйте ещё раз.",
+        retry:"Повторить", none:"Ничего не найдено", empty:"Документов пока нет",
         pinTag:"По PIN", noTag:"Нет допуска", pinTitle:"Введите PIN-код", pinHint:"Документ закрыт. Введите ваш личный PIN-код.",
         enter:"Войти", badPin:"Неверный PIN-код", locked:"Слишком много попыток. Подождите {m} мин.",
         noAccess:"У вас нет допуска к этому документу. Обратитесь к мастеру или руководителю.",
-        noFile:"Файл документа не найден на сервере. Сообщите руководителю.",
-        notConnected:"Закрытые документы пока не подключены. Сообщите руководителю.",
+        noFile:"Документ не найден. Возможно, его убрали. Обновите список.",
+        notConnected:"Приложение не подключено к базе документов. Сообщите руководителю.",
         you:"Вы вошли как", logout:"Выйти", cancel:"Отмена", loggedOut:"Вы вышли",
-        themeEm:"Оформление: изумрудное", themeCoal:"Оформление: угольное", hello:"Здравствуйте, {n}"},
-    tj:{docs:"Ҳуҷҷатҳо", search:"Ҷустуҷӯ дар ҳуҷҷатҳо", onlyRu:"Танҳо бо забони русӣ", onlyRuNote:"Ин ҳуҷҷат танҳо бо забони русӣ мавҷуд аст.",
-        ver:"Версия", back:"Бозгашт", lang:"Забон", loading:"Боркунӣ…", err:"Бор нашуд. Wi-Fi-ро санҷед ва боз кӯшиш кунед.",
-        retry:"Боз кӯшиш", none:"Ҳеҷ чиз ёфт нашуд",
+        themeEm:"Оформление: изумрудное", themeCoal:"Оформление: угольное", hello:"Здравствуйте, {n}",
+        searching:"Ищу в тексте документов…", inText:"найдено в тексте", offline:"Нет связи — показана сохранённая копия",
+        open:"Открыть", download:"Скачать", tooBig:"Файл слишком большой для телефона. Попросите распечатку.",
+        tPdf:"PDF", tImg:"Фото", tTable:"Таблица", tSlides:"Презентация", tFile:"Файл"},
+    tj:{search:"Ҷустуҷӯ дар ҳуҷҷатҳо", onlyRu:"Танҳо бо забони русӣ", onlyRuNote:"Ин ҳуҷҷат танҳо бо забони русӣ мавҷуд аст.",
+        upd:"Навсозӣ", back:"Бозгашт", lang:"Забон", loading:"Боркунӣ…", err:"Бор нашуд. Wi-Fi-ро санҷед ва боз кӯшиш кунед.",
+        retry:"Боз кӯшиш", none:"Ҳеҷ чиз ёфт нашуд", empty:"Ҳоло ҳуҷҷат нест",
         pinTag:"Бо PIN", noTag:"Иҷозат нест", pinTitle:"PIN-кодро ворид кунед", pinHint:"Ҳуҷҷат пӯшида аст. PIN-коди шахсии худро ворид кунед.",
         enter:"Ворид шудан", badPin:"PIN-код нодуруст", locked:"Кӯшишҳо зиёданд. {m} дақиқа интизор шавед.",
         noAccess:"Шумо ба ин ҳуҷҷат иҷозат надоред. Ба усто ё роҳбар муроҷиат кунед.",
-        noFile:"Файли ҳуҷҷат дар сервер ёфт нашуд. Ба роҳбар хабар диҳед.",
-        notConnected:"Ҳуҷҷатҳои пӯшида ҳоло пайваст нестанд. Ба роҳбар хабар диҳед.",
+        noFile:"Ҳуҷҷат ёфт нашуд. Шояд онро бардоштаанд. Рӯйхатро нав кунед.",
+        notConnected:"Барнома ба пойгоҳи ҳуҷҷатҳо пайваст нест. Ба роҳбар хабар диҳед.",
         you:"Шумо ворид шудед:", logout:"Баромадан", cancel:"Бекор", loggedOut:"Шумо баромадед",
-        themeEm:"Намуд: зумуррадӣ", themeCoal:"Намуд: ангиштӣ", hello:"Салом, {n}"},
-    uz:{docs:"Hujjatlar", search:"Hujjatlardan qidirish", onlyRu:"Faqat rus tilida", onlyRuNote:"Bu hujjat faqat rus tilida mavjud.",
-        ver:"Versiya", back:"Orqaga", lang:"Til", loading:"Yuklanmoqda…", err:"Yuklab bo'lmadi. Wi-Fi ni tekshirib, qayta urinib ko'ring.",
-        retry:"Qayta urinish", none:"Hech narsa topilmadi",
+        themeEm:"Намуд: зумуррадӣ", themeCoal:"Намуд: ангиштӣ", hello:"Салом, {n}",
+        searching:"Дар матни ҳуҷҷатҳо ҷустуҷӯ…", inText:"дар матн ёфт шуд", offline:"Алоқа нест — нусхаи захирашуда",
+        open:"Кушодан", download:"Боргирӣ", tooBig:"Файл барои телефон калон аст. Нусхаи чопӣ пурсед.",
+        tPdf:"PDF", tImg:"Сурат", tTable:"Ҷадвал", tSlides:"Слайдҳо", tFile:"Файл"},
+    uz:{search:"Hujjatlardan qidirish", onlyRu:"Faqat rus tilida", onlyRuNote:"Bu hujjat faqat rus tilida mavjud.",
+        upd:"Yangilangan", back:"Orqaga", lang:"Til", loading:"Yuklanmoqda…", err:"Yuklab bo'lmadi. Wi-Fi ni tekshirib, qayta urinib ko'ring.",
+        retry:"Qayta urinish", none:"Hech narsa topilmadi", empty:"Hozircha hujjat yo'q",
         pinTag:"PIN bilan", noTag:"Ruxsat yo'q", pinTitle:"PIN-kodni kiriting", pinHint:"Hujjat yopiq. Shaxsiy PIN-kodingizni kiriting.",
         enter:"Kirish", badPin:"PIN-kod noto'g'ri", locked:"Urinishlar juda ko'p. {m} daqiqa kuting.",
         noAccess:"Sizda bu hujjatga ruxsat yo'q. Usta yoki rahbarga murojaat qiling.",
-        noFile:"Hujjat fayli serverda topilmadi. Rahbarga xabar bering.",
-        notConnected:"Yopiq hujjatlar hali ulanmagan. Rahbarga xabar bering.",
+        noFile:"Hujjat topilmadi. Ehtimol, olib tashlangan. Ro'yxatni yangilang.",
+        notConnected:"Ilova hujjatlar bazasiga ulanmagan. Rahbarga xabar bering.",
         you:"Siz kirdingiz:", logout:"Chiqish", cancel:"Bekor qilish", loggedOut:"Siz chiqdingiz",
-        themeEm:"Ko'rinish: zumrad", themeCoal:"Ko'rinish: ko'mir", hello:"Salom, {n}"}
+        themeEm:"Ko'rinish: zumrad", themeCoal:"Ko'rinish: ko'mir", hello:"Salom, {n}",
+        searching:"Hujjatlar matnidan qidirilmoqda…", inText:"matnda topildi", offline:"Aloqa yo'q — saqlangan nusxa",
+        open:"Ochish", download:"Yuklab olish", tooBig:"Fayl telefon uchun juda katta. Chop etilgan nusxasini so'rang.",
+        tPdf:"PDF", tImg:"Rasm", tTable:"Jadval", tSlides:"Slaydlar", tFile:"Fayl"}
   };
 
+  var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">';
   var ICONS = {
     clipboard:'<path d="M9 4h6v3H9z"/><path d="M8 5.5H6.5A1.5 1.5 0 0 0 5 7v12.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V7a1.5 1.5 0 0 0-1.5-1.5H16"/><path d="M8.5 12h7M8.5 16h5"/>',
     bucket:'<path d="M5 8h14l-1.6 11a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M4 8h16"/><path d="M8 8a4 4 0 0 1 8 0"/>',
     layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
     box:'<path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/>',
     palette:'<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.8-1.8 0-1.3-1-1.6-1-2.7 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.3" r="1.2"/>',
-    doc:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'
+    book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
+    shield:'<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    doc:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+    pdf:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M9 17v-4h1.3a1.3 1.3 0 0 1 0 2.6H9M14 13v4M14 13h2M14 15h1.5"/>',
+    img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+    table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+    file:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/>'
   };
+  var TYPE_ICON = { gdoc:"doc", md:"doc", txt:"doc", pdf:"pdf", img:"img", gsheet:"table", gslides:"file", file:"file" };
+  var TYPE_TAG  = { pdf:"tPdf", img:"tImg", gsheet:"tTable", gslides:"tSlides", file:"tFile" };
   var LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>';
   var UNLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 7.7-1.5"/></svg>';
   var ARROW = '<svg class="arr" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -270,18 +306,17 @@
   var $ = function(id){ return document.getElementById(id); };
   var store = {
     get:function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
-    set:function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+    set:function(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } },
     del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }
   };
 
-  var CAT = null;
+  var API = "", CAT = null;
   var params = new URLSearchParams(location.search);
-  var qrDoc = params.get("doc");
-  var qrLang = params.get("lang");
+  var qrDoc = params.get("doc"), qrLang = params.get("lang");
   var fs = parseInt(store.get("bm.fs") || "17", 10);
   applyFs();
 
-  /* ---------- theme (как в приложении учёта) ---------- */
+  /* ---------- оформление (как в приложении учёта) ---------- */
   function curTheme(){ return document.documentElement.getAttribute("data-theme") === "coal" ? "coal" : "em"; }
   function setTheme(t){
     if(t === "coal") document.documentElement.setAttribute("data-theme","coal"); else document.documentElement.removeAttribute("data-theme");
@@ -289,32 +324,26 @@
     $("metaTheme").setAttribute("content", t === "coal" ? "#1C1D1F" : "#0B5845");
   }
   setTheme(curTheme());
-  $("thBtn").onclick = function(){
-    setTheme(curTheme() === "coal" ? "em" : "coal");
-    toast(t(curTheme() === "coal" ? "themeCoal" : "themeEm", L()));
-  };
+  $("thBtn").onclick = function(){ setTheme(curTheme() === "coal" ? "em" : "coal"); toast(t(curTheme() === "coal" ? "themeCoal" : "themeEm", L())); };
 
   var toastTimer;
-  function toast(msg){ var el = $("toast"); el.textContent = msg; el.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove("on"); }, 2200); }
+  function toast(msg){ var el = $("toast"); el.textContent = msg; el.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove("on"); }, 2400); }
 
-  /* ---------- helpers ---------- */
+  /* ---------- помощники ---------- */
   function L(){ var p = currentRoute(); return p.lang || store.get("bm.lang") || "ru"; }
   function t(key, lang){ return (UI[lang] || UI.ru)[key] || UI.ru[key]; }
   function pick(obj, lang){ return obj ? (obj[lang] || obj.ru || "") : ""; }
-  function langsOf(d){ return d.access === "pin" ? (d.langs || ["ru"]) : Object.keys(d.files || {}); }
-  function hasLang(d, lang){ return langsOf(d).indexOf(lang) !== -1; }
+  function hasLang(d, lang){ return (d.langs || []).indexOf(lang) !== -1; }
+  function typeOf(d, lang){ var ty = d.types || {}; return ty[lang] || ty.ru || ty[(d.langs || [])[0]] || "gdoc"; }
+  function fmtDate(ms){ if(!ms) return ""; var d = new Date(ms); return ("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear(); }
 
   function currentRoute(){
     var h = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     var lang = h[0] && UI[h[0]] ? h[0] : null;
-    return { lang: lang, doc: lang ? (h[1] || null) : null };
+    return { lang: lang, doc: lang ? decodeURIComponent(h[1] || "") || null : null };
   }
   function go(hash){ if(location.hash !== hash){ location.hash = hash; } else { render(); } }
-
-  function show(view){
-    ["vLang","vList","vPin","vDoc"].forEach(function(v){ $(v).classList.toggle("hidden", v !== view); });
-    window.scrollTo(0,0);
-  }
+  function show(view){ ["vLang","vList","vPin","vDoc"].forEach(function(v){ $(v).classList.toggle("hidden", v !== view); }); window.scrollTo(0,0); }
   function setTop(title, sub, lang, showBack, showLang){
     var h = $("title"); h.textContent = title;
     if(sub){ var s = document.createElement("small"); s.textContent = sub; h.appendChild(s); }
@@ -329,20 +358,15 @@
     renderUser();
   }
 
-  /* ---------- PIN session ---------- */
+  /* ---------- вход по PIN ---------- */
   var AUTH = null;
   try { AUTH = JSON.parse(store.get("bm.auth") || "null"); } catch(e){ AUTH = null; }
   if(AUTH && (!AUTH.token || !AUTH.exp || AUTH.exp < Date.now())) { AUTH = null; store.del("bm.auth"); }
   function saveAuth(a){ AUTH = a; if(a) store.set("bm.auth", JSON.stringify(a)); else store.del("bm.auth"); renderUser(); }
-  function deviceId(){
-    var d = store.get("bm.dev");
-    if(!d){ d = Math.random().toString(36).slice(2) + Date.now().toString(36); store.set("bm.dev", d); }
-    return d;
-  }
+  function deviceId(){ var d = store.get("bm.dev"); if(!d){ d = Math.random().toString(36).slice(2) + Date.now().toString(36); store.set("bm.dev", d); } return d; }
   function canRead(d){ return !!(AUTH && (AUTH.all || (AUTH.docs || []).indexOf(d.id) !== -1)); }
   function renderUser(){
-    var b = $("userBtn");
-    b.classList.toggle("hidden", !AUTH);
+    var b = $("userBtn"); b.classList.toggle("hidden", !AUTH);
     if(AUTH){ $("userName").textContent = AUTH.name || ""; b.setAttribute("aria-label", t("you", L()) + " " + (AUTH.name || "")); }
   }
   $("userBtn").onclick = function(){
@@ -366,25 +390,36 @@
   };
 
   function api(body){
-    if(!CAT || !CAT.accessApi) return Promise.reject({code:"not_connected"});
-    return fetch(CAT.accessApi, { method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body) })
+    if(!API) return Promise.reject({code:"not_connected"});
+    return fetch(API, { method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body) })
       .then(function(r){ if(!r.ok) throw {code:"net"}; return r.json(); })
       .then(function(j){ if(!j || !j.ok) throw (j || {code:"net"}); return j; },
             function(e){ throw (e && e.code) ? e : {code:"net"}; });
   }
 
-  /* ---------- views ---------- */
+  /* ---------- список документов: сразу из памяти телефона, затем свежий с сервера ---------- */
+  function findDoc(id){ if(!CAT) return null; for(var i=0;i<CAT.documents.length;i++){ if(CAT.documents[i].id === id) return CAT.documents[i]; } return null; }
+  var catLoading = null, catOffline = false, catTried = false, waitingDoc = false;
+  function loadCatalog(){
+    if(catLoading) return catLoading;
+    catLoading = api({action:"catalog"}).then(function(c){
+      CAT = c; catOffline = false; catTried = true; store.set("bm.cat", JSON.stringify(c)); catLoading = null; return c;
+    }, function(e){ catLoading = null; catOffline = true; catTried = true; throw e; });
+    return catLoading;
+  }
+
+  /* ---------- экраны ---------- */
   function renderLang(){
     var last = store.get("bm.lang");
     setTop("", "", "ru", false, false);
     var box = $("langs"); box.innerHTML = "";
-    CAT.languages.forEach(function(l){
+    LANGUAGES.forEach(function(l){
       var b = document.createElement("button");
       b.className = "lang" + (l.code === last ? " last" : "");
       b.innerHTML = '<span class="code"></span><span><b></b><em></em></span>' + ARROW;
       b.querySelector(".code").textContent = l.code.toUpperCase();
       b.querySelector("b").textContent = l.name;
-      b.querySelector("em").textContent = l.hint || "";
+      b.querySelector("em").textContent = l.hint;
       b.onclick = function(){ chooseLang(l.code); };
       box.appendChild(b);
     });
@@ -392,61 +427,77 @@
   }
   function chooseLang(code){
     store.set("bm.lang", code);
-    if(qrDoc && findDoc(qrDoc)){ var d = qrDoc; qrDoc = null; go("#/" + code + "/" + d); }
-    else { go("#/" + code); }
-  }
-  function findDoc(id){
-    for(var i=0;i<CAT.documents.length;i++){ if(CAT.documents[i].id === id) return CAT.documents[i]; }
-    return null;
+    if(qrDoc){ var d = qrDoc; qrDoc = null; go("#/" + code + "/" + encodeURIComponent(d)); } else { go("#/" + code); }
   }
 
+  var textHits = {}, searchTimer = null, lastQ = "";
   function renderList(lang){
-    setTop(pick(CAT.title, lang), "", lang, false, true);
+    setTop(pick(APP_TITLE, lang), "", lang, false, true);
     $("q").placeholder = t("search", lang);
-    var q = ($("q").value || "").trim().toLowerCase();
     var box = $("list"); box.innerHTML = "";
+    if(!CAT){ box.innerHTML = '<p class="loading"></p>'; box.firstChild.textContent = t("loading", lang); show("vList"); return; }
+    $("sync").textContent = catOffline ? t("offline", lang) : "";
+    var q = ($("q").value || "").trim().toLowerCase();
     var shown = 0;
     CAT.sections.forEach(function(sec){
       var docs = CAT.documents.filter(function(d){
         if(d.section !== sec.id) return false;
         if(!q) return true;
-        var hay = [pick(d.title,lang), pick(d.subtitle,lang), pick(d.title,"ru"), pick(d.subtitle,"ru")].join(" ").toLowerCase();
-        return hay.indexOf(q) !== -1;
+        var hay = [pick(d.title,lang), pick(d.subtitle,lang), pick(d.title,"ru"), pick(d.subtitle,"ru"), pick(sec.title,lang)].join(" ").toLowerCase();
+        return hay.indexOf(q) !== -1 || !!textHits[d.id];
       });
       if(!docs.length) return;
       var h = document.createElement("div"); h.className = "sec"; h.textContent = pick(sec.title, lang); box.appendChild(h);
       var grid = document.createElement("div"); grid.className = "cards"; box.appendChild(grid);
-      docs.forEach(function(d){
-        shown++;
-        var closed = d.access === "pin";
-        var b = document.createElement("button");
-        b.className = "card";
-        b.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-                      (ICONS[d.icon] || ICONS.doc) + '</svg>' + (closed ? '<span class="lk">' + (canRead(d) ? UNLOCK : LOCK) + '</span>' : '') +
-                      '</span><span><b></b><em></em><span class="tags"></span></span>' + ARROW;
-        b.querySelector("b").textContent = pick(d.title, lang);
-        b.querySelector("em").textContent = pick(d.subtitle, lang);
-        var tags = b.querySelector(".tags");
-        function tag(txt, cls){ var s = document.createElement("span"); s.className = "tag " + (cls || ""); s.textContent = txt; tags.appendChild(s); }
-        if(closed){ if(AUTH && !canRead(d)) tag(t("noTag", lang), "no"); else tag(t("pinTag", lang), "pin"); }
-        if(!hasLang(d, lang)) tag(t("onlyRu", lang));
-        if(!tags.childNodes.length) tags.remove();
-        b.onclick = function(){ go("#/" + lang + "/" + d.id); };
-        grid.appendChild(b);
-      });
+      docs.forEach(function(d){ shown++; grid.appendChild(card(d, lang, q)); });
     });
-    if(!shown){ box.innerHTML = '<p class="empty"></p>'; box.firstChild.textContent = t("none", lang); }
+    if(!shown){ box.innerHTML = '<p class="empty"></p>'; box.firstChild.textContent = q ? t("none", lang) : t("empty", lang); }
+    if(q && q.length >= 3 && q !== lastQ){ $("sync").textContent = t("searching", lang); }
     show("vList");
   }
+  function card(d, lang, q){
+    var closed = d.access === "pin";
+    var ty = typeOf(d, lang);
+    var icon = ICONS[d.icon] || ICONS[TYPE_ICON[ty]] || ICONS.doc;
+    var b = document.createElement("button");
+    b.className = "card";
+    b.innerHTML = '<span class="ic">' + SV + icon + '</svg>' + (closed ? '<span class="lk">' + (canRead(d) ? UNLOCK : LOCK) + '</span>' : '') +
+                  '</span><span><b></b><em></em><span class="tags"></span></span>' + ARROW;
+    b.querySelector("b").textContent = pick(d.title, lang);
+    var sub = pick(d.subtitle, lang); var em = b.querySelector("em"); if(sub) em.textContent = sub; else em.remove();
+    var tags = b.querySelector(".tags");
+    function tag(txt, cls){ var s = document.createElement("span"); s.className = "tag " + (cls || ""); s.textContent = txt; tags.appendChild(s); }
+    if(closed){ if(AUTH && !canRead(d)) tag(t("noTag", lang), "no"); else tag(t("pinTag", lang), "pin"); }
+    if(TYPE_TAG[ty]) tag(t(TYPE_TAG[ty], lang), "type");
+    if(!hasLang(d, lang)) tag(t("onlyRu", lang));
+    if(q && textHits[d.id]) tag("🔎 " + t("inText", lang), "hit");
+    if(!tags.childNodes.length) tags.remove();
+    b.onclick = function(){ go("#/" + lang + "/" + encodeURIComponent(d.id)); };
+    return b;
+  }
+  $("q").addEventListener("input", function(){
+    var lang = L(), q = ($("q").value || "").trim();
+    textHits = {}; lastQ = "";
+    renderList(lang);
+    clearTimeout(searchTimer);
+    if(q.length < 3 || !API) { $("sync").textContent = catOffline ? t("offline", lang) : ""; return; }
+    searchTimer = setTimeout(function(){
+      api({action:"search", q:q}).then(function(j){
+        if(($("q").value || "").trim() !== q) return;
+        textHits = {}; (j.ids || []).forEach(function(id){ textHits[id] = 1; });
+        lastQ = q.toLowerCase(); renderList(lang); $("sync").textContent = "";
+      }).catch(function(){ lastQ = q.toLowerCase(); $("sync").textContent = ""; });
+    }, 700);
+  });
 
-  /* PIN pad */
+  /* PIN-клавиатура */
   var pinVal = "", pinBusy = false, pinTarget = null;
   function renderPin(lang, d){
     pinTarget = d; pinVal = ""; pinBusy = false;
     setTop(pick(d.title, lang), t("pinTag", lang), lang, true, true);
     $("pinTitle").textContent = t("pinTitle", lang);
     $("pinHint").textContent = t("pinHint", lang);
-    $("pinMsg").textContent = "";
+    $("pinMsg").textContent = ""; $("pinMsg").style.color = "";
     var pad = $("pad"); pad.innerHTML = "";
     ["1","2","3","4","5","6","7","8","9","del","0","ok"].forEach(function(k){
       var b = document.createElement("button");
@@ -457,8 +508,7 @@
       b.onclick = function(){ pinKey(k, lang); };
       pad.appendChild(b);
     });
-    drawDots();
-    show("vPin");
+    drawDots(); show("vPin");
   }
   function drawDots(){
     var box = $("dots"); box.innerHTML = "";
@@ -468,17 +518,14 @@
   }
   function pinKey(k, lang){
     if(pinBusy) return;
-    if(k === "del"){ pinVal = pinVal.slice(0,-1); }
+    if(k === "del") pinVal = pinVal.slice(0,-1);
     else if(k === "ok"){ submitPin(lang); return; }
-    else if(pinVal.length < PINLEN_MAX){ pinVal += k; }
-    $("pinMsg").textContent = "";
-    drawDots();
+    else if(pinVal.length < PINLEN_MAX) pinVal += k;
+    $("pinMsg").textContent = ""; drawDots();
   }
   document.addEventListener("keydown", function(e){
     if($("vPin").classList.contains("hidden")) return;
-    if(/^[0-9]$/.test(e.key)) pinKey(e.key, L());
-    else if(e.key === "Backspace") pinKey("del", L());
-    else if(e.key === "Enter") pinKey("ok", L());
+    if(/^[0-9]$/.test(e.key)) pinKey(e.key, L()); else if(e.key === "Backspace") pinKey("del", L()); else if(e.key === "Enter") pinKey("ok", L());
   });
   function submitPin(lang){
     if(pinVal.length < PINLEN_MIN) return;
@@ -488,104 +535,191 @@
       .then(function(j){
         saveAuth({token:j.token, exp:j.exp, name:j.name, all:!!j.all, docs:j.docs || []});
         toast(t("hello", lang).replace("{n}", j.name));
-        var d = pinTarget; pinVal = "";
-        renderDoc(lang, d.id);
+        pinVal = ""; renderDoc(lang, pinTarget.id);
       })
       .catch(function(e){
-        pinBusy = false; pinVal = ""; drawDots();
-        $("pinMsg").style.color = "";
+        pinBusy = false; pinVal = ""; drawDots(); $("pinMsg").style.color = "";
         var code = e && e.code;
-        $("pinMsg").textContent =
-          code === "bad_pin" ? t("badPin", lang) :
-          code === "locked" ? t("locked", lang).replace("{m}", e.minutes || 15) :
-          code === "not_connected" ? t("notConnected", lang) : t("err", lang);
+        $("pinMsg").textContent = code === "bad_pin" ? t("badPin", lang) : code === "locked" ? t("locked", lang).replace("{m}", e.minutes || 15) :
+                                  code === "not_connected" ? t("notConnected", lang) : t("err", lang);
       });
+  }
+
+  /* ---------- документ ---------- */
+  function cacheKey(d, lang){ return "bm.doc." + d.id + "." + lang; }
+  function saveDocCache(key, obj){
+    var s = JSON.stringify(obj);
+    if(s.length > 1500000) return;
+    if(!store.set(key, s)){            // память переполнена — убираем старые копии
+      try { Object.keys(localStorage).filter(function(k){ return k.indexOf("bm.doc.") === 0; }).forEach(function(k){ localStorage.removeItem(k); }); } catch(e){}
+      store.set(key, s);
+    }
   }
 
   var loadSeq = 0;
   function renderDoc(lang, id){
     var d = findDoc(id);
-    if(!d){ go("#/" + lang); return; }
+    if(!d){
+      if(API && !catTried){                                          // список ещё грузится с сервера
+        waitingDoc = true; setTop(" ", "", lang, true, true);
+        $("docNote").classList.add("hidden"); $("docVer").textContent = "";
+        $("doc").innerHTML = '<p class="loading"></p>'; $("doc").firstChild.textContent = t("loading", lang);
+        show("vDoc"); return;
+      }
+      go("#/" + lang); return;
+    }
+    waitingDoc = false;
     var closed = d.access === "pin";
     if(closed && !AUTH){ renderPin(lang, d); return; }
 
+    var useLang = hasLang(d, lang) ? lang : (hasLang(d, "ru") ? "ru" : d.langs[0]);
     setTop(pick(d.title, lang), hasLang(d, lang) ? "" : t("onlyRu", lang), lang, true, true);
-    var note = $("docNote");
-    note.classList.toggle("hidden", hasLang(d, lang));
-    note.textContent = t("onlyRuNote", lang);
-    $("docVer").textContent = d.version ? t("ver", lang) + " " + d.version : "";
+    var note = $("docNote"); note.classList.toggle("hidden", hasLang(d, lang)); note.textContent = t("onlyRuNote", lang);
+    $("docVer").textContent = d.updated ? t("upd", lang) + " " + fmtDate(d.updated) : "";
     var art = $("doc");
-    art.innerHTML = '<p class="loading"></p>'; art.firstChild.textContent = t("loading", lang);
-    show("vDoc");
     var seq = ++loadSeq;
 
-    var getText = closed
-      ? api({action:"doc", token:AUTH.token, id:d.id, lang: hasLang(d, lang) ? lang : "ru"}).then(function(j){
-          if(j.access) { AUTH.all = !!j.access.all; AUTH.docs = j.access.docs || []; saveAuth(AUTH); }
-          return j.md;
-        })
-      : fetch((d.files[lang] || d.files.ru) + "?v=" + encodeURIComponent(d.version || ""), {cache:"no-cache"})
-          .then(function(r){ if(!r.ok) throw {code:"net"}; return r.text(); });
+    var ck = cacheKey(d, useLang), cached = null;
+    if(!closed){ try { cached = JSON.parse(store.get(ck) || "null"); } catch(e){} }
+    if(cached && cached.updated === d.updated){ paint(art, cached, lang); show("vDoc"); return; }
 
-    getText.then(function(md){
+    art.innerHTML = '<p class="loading"></p>'; art.firstChild.textContent = t("loading", lang);
+    show("vDoc");
+    api({action:"doc", id:d.id, lang:useLang, token: AUTH ? AUTH.token : ""})
+      .then(function(j){
         if(seq !== loadSeq) return;
-        art.innerHTML = window.marked ? marked.parse(md, {gfm:true}) : "<pre></pre>";
-        if(!window.marked) art.firstChild.textContent = md;
-        art.querySelectorAll("table").forEach(function(tb){
-          var w = document.createElement("div"); w.className = "tw"; tb.parentNode.insertBefore(w, tb); w.appendChild(tb);
-        });
-        art.querySelectorAll("a[href^='http']").forEach(function(a){ a.target = "_blank"; a.rel = "noopener"; });
+        if(j.access && AUTH){ AUTH.all = !!j.access.all; AUTH.docs = j.access.docs || []; saveAuth(AUTH); }
+        paint(art, j, lang);
+        if(!closed && j.kind !== "file") saveDocCache(ck, {updated:d.updated, kind:j.kind, text:j.text, html:j.html});
       })
       .catch(function(e){
         if(seq !== loadSeq) return;
         var code = e && e.code;
         if(code === "expired" || code === "inactive"){ saveAuth(null); renderPin(lang, d); return; }
         if(code === "no_access" && AUTH){ AUTH.docs = (AUTH.docs || []).filter(function(x){ return x !== d.id; }); AUTH.all = false; saveAuth(AUTH); }
+        if(cached && code === "net"){ paint(art, cached, lang); toast(t("offline", lang)); return; }
         var msg = code === "no_access" ? t("noAccess", lang) : code === "no_file" ? t("noFile", lang) :
                   code === "not_connected" ? t("notConnected", lang) : t("err", lang);
         art.innerHTML = '<div class="err' + (code === "no_access" ? ' bad' : '') + '"><p></p></div>';
         art.querySelector("p").textContent = msg;
-        if(code === "net" || !code){
+        if(code === "net" || code === "server" || !code){
           var rb = document.createElement("button"); rb.className = "chip on"; rb.textContent = t("retry", lang);
           rb.onclick = function(){ renderDoc(lang, id); }; art.querySelector(".err").appendChild(rb);
         }
       });
   }
 
+  function paint(art, j, lang){
+    if(j.kind === "md"){
+      art.innerHTML = window.marked ? marked.parse(j.text || "", {gfm:true}) : "";
+      if(!window.marked){ var pre = document.createElement("pre"); pre.textContent = j.text || ""; art.appendChild(pre); }
+      sanitize(art);
+    } else if(j.kind === "html"){
+      art.innerHTML = "";
+      art.appendChild(cleanGdoc(j.html || ""));
+    } else if(j.kind === "file"){
+      paintFile(art, j, lang); return;
+    }
+    art.querySelectorAll("table").forEach(function(tb){ var w = document.createElement("div"); w.className = "tw"; tb.parentNode.insertBefore(w, tb); w.appendChild(tb); });
+    art.querySelectorAll("a[href]").forEach(function(a){ a.target = "_blank"; a.rel = "noopener"; });
+  }
+
+  function paintFile(art, j, lang){
+    art.innerHTML = "";
+    if(j.tooBig || !j.b64){ var e = document.createElement("div"); e.className = "err"; e.textContent = t("tooBig", lang); art.appendChild(e); return; }
+    var bin = atob(j.b64), bytes = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    var url = URL.createObjectURL(new Blob([bytes], {type: j.mime || "application/octet-stream"}));
+    if(/^image\//.test(j.mime || "")){
+      var img = document.createElement("img"); img.src = url; img.alt = j.name || ""; img.style.display = "block"; img.style.margin = "12px auto";
+      art.appendChild(img); return;
+    }
+    var box = document.createElement("div"); box.className = "filecard";
+    var isPdf = /pdf/.test(j.mime || "");
+    box.innerHTML = '<div class="fic">' + SV + (isPdf ? ICONS.pdf : ICONS.file) + '</svg></div><b></b><span></span>';
+    box.querySelector("b").textContent = j.name || "";
+    box.querySelector("span").textContent = Math.max(1, Math.round((j.size || 0) / 1024)) + " КБ";
+    var a = document.createElement("a"); a.className = "bigbtn"; a.href = url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = isPdf ? t("open", lang) : t("download", lang);
+    if(!isPdf) a.download = j.name || "file";
+    box.appendChild(a); art.appendChild(box);
+  }
+
+  /* Google Документ → чистая разметка: жирный/курсив сохраняем, оформление Google убираем */
+  function cleanGdoc(html){
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var css = Array.prototype.map.call(doc.querySelectorAll("style"), function(s){ return s.textContent; }).join("\n");
+    var bold = {}, ital = {}, under = {};
+    css.replace(/\.([\w-]+)\{([^}]*)\}/g, function(m, cls, body){
+      if(/font-weight:\s*(700|800|900|bold)/.test(body)) bold[cls] = 1;
+      if(/font-style:\s*italic/.test(body)) ital[cls] = 1;
+      if(/text-decoration:\s*underline/.test(body)) under[cls] = 1;
+      return m;
+    });
+    Array.prototype.slice.call(doc.querySelectorAll("span")).forEach(function(sp){
+      var cls = (sp.getAttribute("class") || "").split(/\s+/);
+      var inLink = sp.closest("a");
+      var node = doc.createDocumentFragment();
+      while(sp.firstChild) node.appendChild(sp.firstChild);
+      function wrap(tag){ var el = doc.createElement(tag); el.appendChild(node); var f = doc.createDocumentFragment(); f.appendChild(el); node = f; }
+      if(cls.some(function(c){ return bold[c]; })) wrap("strong");
+      if(cls.some(function(c){ return ital[c]; })) wrap("em");
+      if(!inLink && cls.some(function(c){ return under[c]; })) wrap("u");
+      sp.parentNode.replaceChild(node, sp);
+    });
+    Array.prototype.slice.call(doc.querySelectorAll("a[href]")).forEach(function(a){
+      var m = a.getAttribute("href").match(/^https:\/\/www\.google\.com\/url\?q=([^&]+)/);
+      if(m){ try { a.setAttribute("href", decodeURIComponent(m[1])); } catch(e){} }
+    });
+    var body = doc.body;
+    sanitize(body);
+    Array.prototype.slice.call(body.querySelectorAll("p,h1,h2,h3,h4,h5,h6")).forEach(function(p){
+      if(!p.textContent.trim() && !p.querySelector("img")) p.remove();
+    });
+    var frag = document.createDocumentFragment();
+    while(body.firstChild) frag.appendChild(document.importNode(body.firstChild, true)), body.removeChild(body.firstChild);
+    return frag;
+  }
+
+  /* убираем всё лишнее и опасное: скрипты, стили, обработчики, javascript-ссылки */
+  var KEEP = { a:["href"], img:["src","alt"], td:["colspan","rowspan"], th:["colspan","rowspan"], ol:["start"] };
+  function sanitize(root){
+    Array.prototype.slice.call(root.querySelectorAll("script,style,link,meta,iframe,object,embed,form,input,button")).forEach(function(e){ e.remove(); });
+    Array.prototype.slice.call(root.querySelectorAll("*")).forEach(function(el){
+      var keep = KEEP[el.tagName.toLowerCase()] || [];
+      Array.prototype.slice.call(el.attributes).forEach(function(at){ if(keep.indexOf(at.name) === -1) el.removeAttribute(at.name); });
+      ["href","src"].forEach(function(n){ var v = el.getAttribute(n); if(v && /^\s*(javascript|vbscript|data:text)/i.test(v)) el.removeAttribute(n); });
+    });
+  }
+
   function render(){
-    if(!CAT) return;
     var r = currentRoute();
     if(!r.lang){ renderLang(); return; }
     store.set("bm.lang", r.lang);
     if(r.doc){ renderDoc(r.lang, r.doc); } else { renderList(r.lang); }
   }
+  function applyFs(){ fs = Math.max(14, Math.min(26, fs)); document.documentElement.style.setProperty("--fs", fs + "px"); store.set("bm.fs", String(fs)); }
 
-  function applyFs(){
-    fs = Math.max(14, Math.min(26, fs));
-    document.documentElement.style.setProperty("--fs", fs + "px");
-    store.set("bm.fs", String(fs));
-  }
-
-  /* ---------- events ---------- */
+  /* ---------- события ---------- */
   $("back").onclick = function(){ go("#/" + L()); };
   $("home").onclick = function(){ if(currentRoute().lang) go("#/" + L()); };
   $("langBtn").onclick = function(){ var r = currentRoute(); if(r.doc) qrDoc = r.doc; go("#/"); };
-  $("q").addEventListener("input", function(){ renderList(L()); });
   $("fsMinus").onclick = function(){ fs -= 2; applyFs(); };
   $("fsPlus").onclick = function(){ fs += 2; applyFs(); };
   window.addEventListener("hashchange", render);
 
-  /* ---------- start ---------- */
+  /* ---------- запуск ---------- */
+  try { CAT = JSON.parse(store.get("bm.cat") || "null"); } catch(e){ CAT = null; }
   fetch("catalog.json", {cache:"no-cache"})
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function(c){
-      CAT = c;
-      if((!location.hash || location.hash === "#" || location.hash === "#/") && qrLang && UI[qrLang]){ chooseLang(qrLang); return; }
-      render();
-    })
-    .catch(function(){
-      $("vLang").classList.remove("hidden");
-      $("langs").innerHTML = '<div class="err">Не удалось загрузить список. Проверьте Wi-Fi.<br>Бор нашуд. Wi-Fi-ро санҷед.<br>Yuklab bo\'lmadi. Wi-Fi ni tekshiring.</div>';
+    .then(function(c){ API = c.accessApi || ""; })
+    .catch(function(){ API = store.get("bm.api") || ""; })
+    .then(function(){
+      if(API) store.set("bm.api", API);
+      if((!location.hash || location.hash === "#" || location.hash === "#/") && qrLang && UI[qrLang]){ chooseLang(qrLang); } else { render(); }
+      if(!API){ CAT = CAT || {sections:[], documents:[]}; catOffline = false; $("sync").textContent = t("notConnected", L()); render(); return; }
+      function after(){ var r = currentRoute(); if(r.lang && (!r.doc || waitingDoc)) render(); }
+      loadCatalog().then(after, function(){ if(!CAT) CAT = {sections:[], documents:[]}; after(); });
     });
 
   if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){

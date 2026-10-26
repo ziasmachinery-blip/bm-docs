@@ -26,9 +26,11 @@
   .q.main h2{font-size:26px}
   .q .tr{color:#333;font-size:15px;line-height:1.35}
   .q .how{margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.35}
+  .sech{grid-column:1/-1;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:13px;margin:8px 2px -4px}
   .q .url{margin-top:6px;font-size:10.5px;color:#8a9094;word-break:break-all}
   @media (max-width:560px){ .q.main{flex-direction:column;text-align:center} .q.main svg{margin:0 auto} }
   @page{size:A4;margin:10mm}
+  @media print{ .sech{display:none} }
   @media print{
     body{background:#fff}
     .panel{display:none}
@@ -90,11 +92,14 @@
     m.appendChild(mt);
     sheet.appendChild(m);
 
+    var lastSec = null;
     cat.documents.forEach(function(d){
+      if(d.section !== lastSec){ lastSec = d.section; var h = el("div", "sech", d.section); sheet.appendChild(h); }
       var url = b + "?doc=" + encodeURIComponent(d.id);
+      var lockTxt = d.access === "pin" ? " 🔒" : "";
       var c = el("div", "q");
       c.innerHTML = svg(url);
-      c.appendChild(el("h2", "", d.title.ru));
+      c.appendChild(el("h2", "", d.title.ru + lockTxt));
       var tr = [d.title.tj, d.title.uz].filter(Boolean).join(" · ");
       if(tr) c.appendChild(el("div", "tr", tr));
       c.appendChild(el("div", "how", HOW));
@@ -104,12 +109,23 @@
     try { localStorage.setItem("bm.qrbase", b); } catch(e){}
   }
 
-  fetch("catalog.json").then(function(r){ return r.json(); }).then(function(cat){
+  function loadCat(){
+    return fetch("catalog.json", {cache:"no-cache"}).then(function(r){ return r.json(); }).then(function(c){
+      if(!c.accessApi) throw new Error("no api");
+      return fetch(c.accessApi, {method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"catalog"})})
+        .then(function(r){ return r.json(); });
+    }).catch(function(){
+      var c = null; try { c = JSON.parse(localStorage.getItem("bm.cat") || "null"); } catch(e){}
+      if(!c) throw new Error("no catalog");
+      return c;
+    });
+  }
+  loadCat().then(function(cat){
     build(cat);
     document.getElementById("apply").onclick = function(){ build(cat); };
     document.getElementById("withUrl").onchange = function(){ build(cat); };
   }).catch(function(){
-    document.getElementById("sheet").textContent = "Не удалось прочитать catalog.json. Откройте эту страницу с опубликованного сайта (GitHub Pages или сервер цеха).";
+    document.getElementById("sheet").textContent = "Не удалось получить список документов. Проверьте, что в catalog.json вставлена ссылка /exec, и откройте эту страницу с опубликованного сайта.";
   });
   document.getElementById("print").onclick = function(){ window.print(); };
 })();
