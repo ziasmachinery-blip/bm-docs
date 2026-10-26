@@ -4,7 +4,7 @@
     "tj": "Ҳуҷҷатҳои БМ",
     "uz": "BM hujjatlari"
   },
-  "accessApi": "",
+  "accessApi": "https://script.google.com/macros/s/AKfycbxz3LCTJuQPiObti96DNXsW3rHG_Nptc7hADDoO-2EDQIKMq3hKSgTybPDcxxLBk_h4dw/exec",
   "accessApiNote": "Сюда вставьте ссылку /exec скрипта «Документация БМ — доступ» (см. README). Пока пусто — закрытые документы не открываются.",
   "languages": [
     {
