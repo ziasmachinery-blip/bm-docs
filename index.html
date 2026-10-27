@@ -74,6 +74,7 @@
   .search svg{position:absolute;left:14px;top:13px;width:22px;height:22px;color:var(--ashDark)}
   .sec{margin:22px 2px 10px;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
   .sec:first-child{margin-top:4px}
+  .secnote.top{margin:4px 2px 12px}
   .secnote{margin:-6px 2px 10px;color:var(--muted);font-size:14px}
   .card.login{margin-top:18px;border-style:dashed}
   .card.login .ic{background:var(--emLight);color:var(--em)}
@@ -261,7 +262,7 @@
   var APP_TITLE = { ru:"Документация БМ", tj:"Ҳуҷҷатҳои БМ", uz:"BM hujjatlari" };
 
   var UI = {
-    ru:{login:"Войти", loginHint:"Введите личный PIN-код — откроются документы вашего отдела.", docsN:"док.",
+    ru:{login:"Войти", loginHint:"Введите личный PIN-код — откроются документы вашего отдела.", docsN:"док.", docsHere:"Документы",
         search:"Поиск по документам", onlyRu:"Только на русском", onlyRuNote:"Этот документ есть только на русском языке.",
         upd:"Обновлено", back:"Назад", lang:"Язык", loading:"Загрузка…", err:"Не удалось загрузить. Проверьте Wi-Fi и попробуйте ещё раз.",
         retry:"Повторить", none:"Ничего не найдено", empty:"Документов пока нет",
@@ -275,7 +276,7 @@
         searching:"Ищу в тексте документов…", inText:"найдено в тексте", offline:"Нет связи — показана сохранённая копия",
         open:"Открыть", download:"Скачать", tooBig:"Файл слишком большой для телефона. Попросите распечатку.",
         tPdf:"PDF", tImg:"Фото", tTable:"Таблица", tSlides:"Презентация", tFile:"Файл"},
-    tj:{login:"Ворид шудан", loginHint:"PIN-коди шахсиро ворид кунед — ҳуҷҷатҳои шӯъбаи шумо кушода мешаванд.", docsN:"ҳуҷҷат",
+    tj:{login:"Ворид шудан", loginHint:"PIN-коди шахсиро ворид кунед — ҳуҷҷатҳои шӯъбаи шумо кушода мешаванд.", docsN:"ҳуҷҷат", docsHere:"Ҳуҷҷатҳо",
         search:"Ҷустуҷӯ дар ҳуҷҷатҳо", onlyRu:"Танҳо бо забони русӣ", onlyRuNote:"Ин ҳуҷҷат танҳо бо забони русӣ мавҷуд аст.",
         upd:"Навсозӣ", back:"Бозгашт", lang:"Забон", loading:"Боркунӣ…", err:"Бор нашуд. Wi-Fi-ро санҷед ва боз кӯшиш кунед.",
         retry:"Боз кӯшиш", none:"Ҳеҷ чиз ёфт нашуд", empty:"Ҳоло ҳуҷҷат нест",
@@ -289,7 +290,7 @@
         searching:"Дар матни ҳуҷҷатҳо ҷустуҷӯ…", inText:"дар матн ёфт шуд", offline:"Алоқа нест — нусхаи захирашуда",
         open:"Кушодан", download:"Боргирӣ", tooBig:"Файл барои телефон калон аст. Нусхаи чопӣ пурсед.",
         tPdf:"PDF", tImg:"Сурат", tTable:"Ҷадвал", tSlides:"Слайдҳо", tFile:"Файл"},
-    uz:{login:"Kirish", loginHint:"Shaxsiy PIN-kodni kiriting — bo'limingiz hujjatlari ochiladi.", docsN:"hujjat",
+    uz:{login:"Kirish", loginHint:"Shaxsiy PIN-kodni kiriting — bo'limingiz hujjatlari ochiladi.", docsN:"hujjat", docsHere:"Hujjatlar",
         search:"Hujjatlardan qidirish", onlyRu:"Faqat rus tilida", onlyRuNote:"Bu hujjat faqat rus tilida mavjud.",
         upd:"Yangilangan", back:"Orqaga", lang:"Til", loading:"Yuklanmoqda…", err:"Yuklab bo'lmadi. Wi-Fi ni tekshirib, qayta urinib ko'ring.",
         retry:"Qayta urinish", none:"Hech narsa topilmadi", empty:"Hozircha hujjat yo'q",
@@ -490,36 +491,82 @@
     var hay = [pick(d.title,lang), pick(d.subtitle,lang), pick(d.title,"ru"), pick(d.subtitle,"ru"), sec ? pick(sec.full, lang) : ""].join(" ").toLowerCase();
     return hay.indexOf(q) !== -1 || !!textHits[d.id];
   }
-  /* главная (top = null): отделы; отдел (top): подразделы с документами; при поиске — найденные документы */
-  function renderList(lang, top){
+  /* папки: имя любого уровня пути на нужном языке */
+  function folderName(path, lang){
+    var depth = path.split(" / ").length;
+    if(depth === 1){ var tp = findTop(path); if(tp) return pick(tp.title, lang); }
+    var secs = (CAT && CAT.sections) || [];
+    for(var i=0;i<secs.length;i++){
+      var s = secs[i];
+      if(s.id === path || s.id.indexOf(path + " / ") === 0){
+        var a = String(pick(s.full, lang)).split(" / ");
+        if(a.length >= depth && a[depth-1]) return a[depth-1];
+        return String(pick(s.full, "ru")).split(" / ")[depth-1] || path.split(" / ").pop();
+      }
+    }
+    return path.split(" / ").pop().replace(/^\d+[\s._-]+/, "");
+  }
+  function secById(id){ var a = (CAT && CAT.sections) || []; for(var i=0;i<a.length;i++){ if(a[i].id === id) return a[i]; } return null; }
+  function inFolder(d, path){ return d.section === path || d.section.indexOf(path + " / ") === 0; }
+
+  /* главная (path = null): отделы; папка (path): вложенные папки, затем документы этой папки; при поиске — найденные документы */
+  function renderList(lang, path){
     var tops = (CAT && CAT.tops) || [];
-    if(!top && tops.length === 1 && !($("q").value || "").trim()) top = tops[0].id;     // один отдел — сразу в него
-    var topObj = top ? findTop(top) : null;
-    backTo = top && tops.length > 1 ? "#/" + lang : null;
-    setTop(topObj ? pick(topObj.title, lang) : pick(APP_TITLE, lang), "", lang, !!backTo, true);
+    var q = ($("q").value || "").trim().toLowerCase();
+    if(!path && tops.length === 1 && !q) path = tops[0].id;     // один отдел — сразу в него
+    var parts = path ? path.split(" / ") : [];
+    var parent = parts.length > 1 ? parts.slice(0, -1).join(" / ") : null;
+    backTo = parent ? "#/" + lang + "/~" + encodeURIComponent(parent) : (path && tops.length > 1 ? "#/" + lang : null);
+    var crumbs = CAT && parts.length > 1 ? parts.slice(0, -1).map(function(_, i){ return folderName(parts.slice(0, i + 1).join(" / "), lang); }).join(" › ") : "";
+    setTop(path && CAT ? folderName(path, lang) : pick(APP_TITLE, lang), crumbs, lang, !!backTo, true);
     $("q").placeholder = t("search", lang);
     var box = $("list"); box.innerHTML = "";
     if(!CAT || !CAT.documents){ box.appendChild(el("p", "loading", t("loading", lang))); show("vList"); return; }
     $("sync").textContent = catOffline ? t("offline", lang) : "";
-    var q = ($("q").value || "").trim().toLowerCase();
     var shown = 0;
 
-    if(!top && !q){
+    if(q){
+      /* поиск: найденные документы с заголовками разделов (внутри папки — только в ней) */
+      (CAT.sections || []).forEach(function(sec){
+        if(path && !(sec.id === path || sec.id.indexOf(path + " / ") === 0)) return;
+        var docs = CAT.documents.filter(function(d){ return d.section === sec.id && docMatches(d, lang, q, sec); });
+        if(!docs.length) return;
+        box.appendChild(el("div", "sec", pick(sec.full, lang)));
+        var grid = el("div", "cards"); box.appendChild(grid);
+        docs.forEach(function(d){ shown++; grid.appendChild(card(d, lang, q)); });
+      });
+    } else if(!path){
       if(tops.length){
         var grid0 = el("div", "cards"); box.appendChild(grid0);
         tops.forEach(function(x){ shown++; grid0.appendChild(deptCard(x, lang)); });
       }
     } else {
-      (CAT.sections || []).forEach(function(sec){
-        if(top && sec.top !== top) return;
-        var docs = CAT.documents.filter(function(d){ return d.section === sec.id && docMatches(d, lang, q, sec); });
-        if(!docs.length) return;
-        var head = top ? pick(sec.title, lang) : pick(sec.full, lang);
-        if(head){ var h = el("div", "sec", head); box.appendChild(h);
-          if(top && sec.note && lang === "ru" && !q) box.appendChild(el("div", "secnote", sec.note)); }
-        var grid = el("div", "cards"); box.appendChild(grid);
-        docs.forEach(function(d){ shown++; grid.appendChild(card(d, lang, q)); });
+      var me = secById(path);
+      if(me && me.note && lang === "ru") box.appendChild(el("div", "secnote top", me.note));
+      /* вложенные папки (по порядку из таблицы), в скобках — сколько в них документов */
+      var kids = [], cnt = {};
+      CAT.documents.forEach(function(d){
+        if(d.section.indexOf(path + " / ") !== 0) return;
+        var k = d.section.split(" / ").slice(0, parts.length + 1).join(" / ");
+        if(!(k in cnt)){ cnt[k] = 0; }
+        cnt[k]++;
       });
+      (CAT.sections || []).forEach(function(sec){
+        if(sec.id.indexOf(path + " / ") !== 0) return;
+        var k = sec.id.split(" / ").slice(0, parts.length + 1).join(" / ");
+        if(cnt[k] && kids.indexOf(k) === -1) kids.push(k);
+      });
+      Object.keys(cnt).forEach(function(k){ if(kids.indexOf(k) === -1) kids.push(k); });
+      if(kids.length){
+        var gf = el("div", "cards"); box.appendChild(gf);
+        kids.forEach(function(k){ shown++; gf.appendChild(folderCard(k, cnt[k], lang)); });
+      }
+      var docs = CAT.documents.filter(function(d){ return d.section === path; });
+      if(docs.length){
+        if(kids.length) box.appendChild(el("div", "sec", t("docsHere", lang)));
+        var gd = el("div", "cards"); box.appendChild(gd);
+        docs.forEach(function(d){ shown++; gd.appendChild(card(d, lang, "")); });
+      }
     }
     if(!shown) box.appendChild(el("p", "empty", q ? t("none", lang) : t("empty", lang)));
     if(!AUTH && API && !q){
@@ -539,6 +586,15 @@
     b.querySelector("b").textContent = pick(x.title, lang);
     b.querySelector("em").textContent = x.count + " " + t("docsN", lang) + (x.note && lang === "ru" ? " · " + x.note : "");
     b.onclick = function(){ go("#/" + lang + "/~" + encodeURIComponent(x.id)); };
+    return b;
+  }
+  function folderCard(path, n, lang){
+    var b = el("button", "card fold");
+    b.innerHTML = '<span class="ic">' + SV + ICONS.folder + '</svg></span><span><b></b><em></em></span>' + ARROW;
+    b.querySelector("b").textContent = folderName(path, lang);
+    var sec = secById(path);
+    b.querySelector("em").textContent = n + " " + t("docsN", lang) + (sec && sec.note && lang === "ru" ? " · " + sec.note : "");
+    b.onclick = function(){ go("#/" + lang + "/~" + encodeURIComponent(path)); };
     return b;
   }
   function card(d, lang, q){
@@ -674,8 +730,7 @@
     var closed = d.access === "closed";
     if(closed && !AUTH){ renderPin(lang, d); return; }
 
-    var tp = d.section.split(" / ")[0];
-    backTo = "#/" + lang + ((CAT.tops || []).length > 1 ? "/~" + encodeURIComponent(tp) : "");
+    backTo = "#/" + lang + "/~" + encodeURIComponent(d.section);
     var useLang = hasLang(d, lang) ? lang : (hasLang(d, "ru") ? "ru" : d.langs[0]);
     setTop(pick(d.title, lang), hasLang(d, lang) ? "" : t("onlyRu", lang), lang, true, true);
     var note = $("docNote"); note.classList.toggle("hidden", hasLang(d, lang)); note.textContent = t("onlyRuNote", lang);
