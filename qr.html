@@ -44,7 +44,7 @@
 <body>
 <div class="panel">
   <h1>QR-коды для печати</h1>
-  <p>Общий QR открывает выбор языка и список всех документов. QR документа — выбор языка и сразу этот документ. Вырежьте и повесьте у рабочего места.</p>
+  <p>Общий QR открывает выбор языка и разделы. QR документа — выбор языка и сразу этот документ (для документов отделов приложение сначала спросит PIN). Чтобы в списке были и закрытые документы, сначала войдите в приложении на этом устройстве под PIN с галочкой «Все разделы». Вырежьте и повесьте у рабочего места.</p>
   <div class="row">
     <input id="base" aria-label="Адрес приложения">
     <button id="apply">Обновить</button>
@@ -94,9 +94,9 @@
 
     var lastSec = null;
     cat.documents.forEach(function(d){
-      if(d.section !== lastSec){ lastSec = d.section; var h = el("div", "sech", d.section); sheet.appendChild(h); }
+      if(d.section !== lastSec){ lastSec = d.section; var h = el("div", "sech", d.section.split(" / ").map(function(x){ return x.replace(/^\d+[\s._-]+/, ""); }).join(" / ")); sheet.appendChild(h); }
       var url = b + "?doc=" + encodeURIComponent(d.id);
-      var lockTxt = d.access === "pin" ? " 🔒" : "";
+      var lockTxt = d.access === "closed" ? " 🔒" : "";
       var c = el("div", "q");
       c.innerHTML = svg(url);
       c.appendChild(el("h2", "", d.title.ru + lockTxt));
@@ -109,10 +109,12 @@
     try { localStorage.setItem("bm.qrbase", b); } catch(e){}
   }
 
+  /* закрытые документы попадут в список, если в приложении на этом устройстве выполнен вход (лучше — с «Все разделы») */
+  function authToken(){ try { var a = JSON.parse(localStorage.getItem("bm.auth") || "null"); return a && a.exp > Date.now() ? a.token : ""; } catch(e){ return ""; } }
   function loadCat(){
     return fetch("catalog.json", {cache:"no-cache"}).then(function(r){ return r.json(); }).then(function(c){
       if(!c.accessApi) throw new Error("no api");
-      return fetch(c.accessApi, {method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"catalog"})})
+      return fetch(c.accessApi, {method:"POST", redirect:"follow", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:"catalog", token: authToken()})})
         .then(function(r){ return r.json(); });
     }).catch(function(){
       var c = null; try { c = JSON.parse(localStorage.getItem("bm.cat") || "null"); } catch(e){}
